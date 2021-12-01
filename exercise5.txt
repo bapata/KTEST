@@ -1,0 +1,50 @@
+Exercise-5 : Script grown-ups: Solve the problem in question 4 using any programming language you like. [15pts]
+
+-- I referred these --
+https://stackoverflow.com/questions/11936967/text-file-parsing-with-python
+https://realpython.com/python-command-line-arguments/
+https://www.programiz.com/python-programming/regex
+https://stackoverflow.com/questions/493386/how-to-print-without-a-newline-or-space
+
+-- python code: extract_partial_hosts.py --
+#!/usr/bin/env python3
+import sys
+import re
+
+# This script parses a text file containing list of hosts, other information
+# and prints comma separated list of partial hosts.
+
+# Usage: <this-script> <input-file>
+
+def main():
+  # Ensure minimum arguments
+  if len(sys.argv)!=2:
+    print("USAGE: <this-script> <input-file>")
+    sys.exit(1)
+
+  file_to_parse=sys.argv[1]
+
+  line_pattern= 'host[0-9]+\.example1.com'
+  output_list=[]
+
+  # Parse and construct list of partial hosts
+  with open(file_to_parse, "r") as csv_file:
+    for ii, line in enumerate(csv_file):
+      result = re.findall(line_pattern, line)
+      if not len(result): # Ignore empty lines
+        continue
+      output_list.append(result[0].split(".")[0]) # Accumulate partial host names
+
+  # Report it
+  output_line = ",".join(output_list)
+  print(output_line)
+
+
+# Main starts here
+main()
+
+--- end code ---
+
+-- output --
+./extract_partial_hosts.py input.txt
+host1,host2,host3,host4

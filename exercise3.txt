@@ -1,0 +1,33 @@
+Exercise-3:
+
+All the continuouses: Write a simple build and deployment pipeline for the above using groovy / Jenkinsfile,
+Travis CI or Gitlab CI. [15 pts]
+
+== Solution ==
+### I watched this video and understood how to integrate jenkins with kubernetes
+https://www.youtube.com/watch?v=V4kYbHlQYHg
+
+### I copied the Jenkins file from the video ( The CI/CD I use at my job has a layer where sequence/rules are specified as a YAML file)
+
+### Jenkins CI/CD file to deploy litecoin stateful sets.
+### The pipeline uses kubernetes pod as agent. It clones jenkinsfiles.git which contains litecoin statefulset deployment YAML file
+### The kubetl apply is done as part of the Jenkins job by the script kubernetesDeploy.
+
+pipeline {
+  agent { label 'kubepod' }
+
+  states {
+    stage {
+      steps {
+        git url:'https://github.com/bapata/jenkinsfiles.git', branch: 'master'
+      }
+    }
+    stage {
+      steps {
+        script {
+          kubernetesDeploy(configs: litecoin.yaml, kubeconfigID: "litecoinconfig")
+        }
+      }
+    }
+  }
+}

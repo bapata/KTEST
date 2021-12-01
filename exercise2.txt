@@ -1,0 +1,104 @@
+Exercise-2:
+Kubernetes statefulset to run the Dockerimage developed in exercise-1 (to run it in minikube, I actually used original image and not the one I built)
+
+## I referred these documents to develop stateful set YAML file
+[1] https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/
+[2] https://www.bogotobogo.com/DevOps/Docker/Docker_Kubernetes_StatefulSet.php
+[3] https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/  # For resourcelimits
+
+## I copied the YAML file as is and modified for our exercise requirements. Added resourceLimit entrues by referring to [3]
+
+--- Statefulset YAML file ---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: litecoin
+  namespace: litecoin
+  labels:
+    app: litecoin-app
+spec:
+  ports:
+  - port: 80
+    name: litecoin
+  clusterIP: None
+  selector:
+    app: litecoin-app
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: litecoin
+  namespace: litecoin
+spec:
+  serviceName: litecoin
+  replicas: 2
+  selector:
+    matchLabels:
+      app: litecoin-app
+  template:
+    metadata:
+      labels:
+        app: litecoin-app
+    spec:
+      containers:
+      - name: litecoin-core
+        image: uphold/litecoin-core:0.18.1
+        resources:
+          requests:
+            memory: "500Mi"
+            cpu: "500m"
+          limits:
+            memory: "1000Mi"
+            cpu: "1000m"
+        ports:
+        - containerPort: 80
+          name: litecoin
+        volumeMounts:
+        - name: data
+          mountPath: /home/litecoin/.litecoin
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi
+
+--- end of statefulset YAML file --
+
+## I used minikube to test 2 stateful sets
+
+### Created namespace
+kubectl create namespace litecoin
+namespace/litecoin created
+
+### Applied to cluster ( I had to modify resources to avoid OOMs. Initial values were too low )
+kubectl apply -f litecoin-app.yaml
+service/litecoin created
+statefulset.apps/litecoin created
+
+### Verified that stateful sets are created
+kubectl get pods -l app=litecoin-app -n litecoin
+NAME         READY   STATUS    RESTARTS   AGE
+litecoin-0   1/1     Running   0          80s
+litecoin-1   1/1     Running   0          79s
+
+
+### Verifications (copied and modified from https://www.bogotobogo.com/DevOps/Docker/Docker_Kubernetes_StatefulSet.php)
+for i in {0..1}; do kubectl -n litecoin exec litecoin-$i -- sh -c 'hostname'; done
+litecoin-0
+litecoin-1
+
+### Verified no restarts because of capacity issues
+kubectl get pods -l app=litecoin-app -n litecoin
+NAME         READY   STATUS    RESTARTS   AGE
+litecoin-0   1/1     Running   0          2m44s
+litecoin-1   1/1     Running   0          2m43s
+
+### Verified PVCs are created
+kubectl get pvc -l app=litecoin-app -n litecoin
+NAME              STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+data-litecoin-0   Bound    pvc-098c556b-f4db-473e-a0a3-5b3875ec09d4   1Gi        RWO            standard       11m
+data-litecoin-1   Bound    pvc-a0e1ab0c-8fb3-4a32-8b18-1442ad87d087   1Gi        RWO            standard       10m

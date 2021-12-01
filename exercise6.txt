@@ -1,0 +1,4 @@
+Exercise-6: Terraform lovers unite: write a Terraform module that creates the following resources in IAM;
+
+Solution:
+  I haven't used Terraform, so, not attempting this.

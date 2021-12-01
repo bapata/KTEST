@@ -1,0 +1,28 @@
+Exercise-4:
+
+Script kiddies: Source or come up with a text manipulation problem and solve it with at least two of awk, sed, tr
+and / or grep. Check the question below first though, maybe. [10pts]
+
+== Solution ==
+I did not use any references to solve this problem.
+
+Problem: Extract partial host names and output as comma separated values from input.txt file (format shown below)
+
+-- input.txt --
+host1.example1.com,UP,east_coast1
+some garbage line1
+host2.example1.com,DOWN,east_coast2
+some garbage line2
+host3.example1.com,UP,east_coast1
+some garbage line3
+host4.example1.com,UP,east_coast1
+some garbage line4
+
+-- Desired output is to get comma separated list of partial hostnames as below
+host1,host2,host3,host4
+
+-- solution-1 (used grep, awk, sed, tr) --
+egrep example1.com input.txt | awk -F, '{print $1}' | sed 's/.example1.com//g' | tr "\n" ",";echo
+
+-- solution-2 (used awk,sed,tr) --
+awk -F, '/example1.com/{print $1}' input.txt | sed 's/.example1.com//g' | tr "\n" "," | sed 's/\,$//g';echo

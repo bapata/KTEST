@@ -1,0 +1,39 @@
+References I used to complete this exercise:
+
+https://github.com/uphold/docker-litecoin-core
+https://docs.docker.com/engine/reference/builder
+https://www.thegeekdiary.com/run-docker-as-a-non-root-user/
+
+
+-- here is my Dockerfile --
+
+FROM uphold/litecoin-core:0.18.1
+# Normal user
+USER litecoin
+# Compare docker image checksum and fail if checksum mismatch
+RUN if [[ $(docker inspect uphold/litecoin-core:0.18.1  | jq -r '.[0].ContainerConfig.Image' | sed 's/sha256\://g') != "d9fa6c4176cc2d4fcca19ffe58ca47f91c71b9a5accff02202008eecbabb34ff" ]]; \
+    then \
+      echo "Docker image checksum mismatch, aborting ..."; \
+      exit -1; \
+    fi
+CMD ["/usr/local/bin/litecoind","-printtoconsole"]
+
+-- end of Dockerfile
+
+
+
+## I ran it this way to successfully run as a Daemon:
+docker run -v /tmp/data:/home/litecoin/.litecoin $(docker build -q .)
+
+
+
+## If I just run as below, it fails with permission issue and I couldn't figure out the issue
+
+docker run $(docker build -q .)
+2021-11-25T04:55:55Z Litecoin Core version v0.18.1 (release build)
+2021-11-25T04:55:55Z
+
+************************
+EXCEPTION: N5boost10filesystem16filesystem_errorE
+boost::filesystem::create_directory: Permission denied: "/home/litecoin/.litecoin/blocks"
+litecoin in AppInit()
